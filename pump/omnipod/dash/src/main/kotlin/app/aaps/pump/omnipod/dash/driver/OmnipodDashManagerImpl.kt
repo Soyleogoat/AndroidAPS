@@ -5,41 +5,46 @@ import app.aaps.core.interfaces.logging.AAPSLogger
 import app.aaps.core.interfaces.logging.LTag
 import app.aaps.core.interfaces.rx.AapsSchedulers
 import app.aaps.core.interfaces.utils.Round
-import app.aaps.pump.omnipod.dash.driver.comm.OmnipodDashBleManager
-import app.aaps.pump.omnipod.dash.driver.event.PodEvent
-import app.aaps.pump.omnipod.dash.driver.pod.command.DeactivateCommand
-import app.aaps.pump.omnipod.dash.driver.pod.command.GetStatusCommand
-import app.aaps.pump.omnipod.dash.driver.pod.command.GetVersionCommand
-import app.aaps.pump.omnipod.dash.driver.pod.command.GetVersionCommand.Companion.DEFAULT_UNIQUE_ID
-import app.aaps.pump.omnipod.dash.driver.pod.command.ProgramAlertsCommand
-import app.aaps.pump.omnipod.dash.driver.pod.command.ProgramBasalCommand
-import app.aaps.pump.omnipod.dash.driver.pod.command.ProgramBeepsCommand
-import app.aaps.pump.omnipod.dash.driver.pod.command.ProgramBolusCommand
-import app.aaps.pump.omnipod.dash.driver.pod.command.ProgramTempBasalCommand
-import app.aaps.pump.omnipod.dash.driver.pod.command.SetUniqueIdCommand
-import app.aaps.pump.omnipod.dash.driver.pod.command.SilenceAlertsCommand
-import app.aaps.pump.omnipod.dash.driver.pod.command.StopDeliveryCommand
-import app.aaps.pump.omnipod.dash.driver.pod.command.SuspendDeliveryCommand
-import app.aaps.pump.omnipod.dash.driver.pod.definition.ActivationProgress
-import app.aaps.pump.omnipod.dash.driver.pod.definition.AlertConfiguration
-import app.aaps.pump.omnipod.dash.driver.pod.definition.AlertTrigger
-import app.aaps.pump.omnipod.dash.driver.pod.definition.AlertType
-import app.aaps.pump.omnipod.dash.driver.pod.definition.BasalProgram
-import app.aaps.pump.omnipod.dash.driver.pod.definition.BeepRepetitionType
-import app.aaps.pump.omnipod.dash.driver.pod.definition.BeepType
-import app.aaps.pump.omnipod.dash.driver.pod.definition.PodConstants.Companion.MAX_POD_LIFETIME
-import app.aaps.pump.omnipod.dash.driver.pod.definition.PodConstants.Companion.POD_EXPIRATION_ALERT_HOURS_REMAINING_DEFAULT
-import app.aaps.pump.omnipod.dash.driver.pod.definition.PodConstants.Companion.POD_EXPIRATION_IMMINENT_ALERT_HOURS_REMAINING
-import app.aaps.pump.omnipod.dash.driver.pod.definition.PodConstants.Companion.POD_PULSE_BOLUS_UNITS
-import app.aaps.pump.omnipod.dash.driver.pod.definition.PodStatus
-import app.aaps.pump.omnipod.dash.driver.pod.definition.ProgramReminder
-import app.aaps.pump.omnipod.dash.driver.pod.response.AlarmStatusResponse
-import app.aaps.pump.omnipod.dash.driver.pod.response.DefaultStatusResponse
-import app.aaps.pump.omnipod.dash.driver.pod.response.Response
-import app.aaps.pump.omnipod.dash.driver.pod.response.ResponseType
-import app.aaps.pump.omnipod.dash.driver.pod.response.SetUniqueIdResponse
-import app.aaps.pump.omnipod.dash.driver.pod.response.VersionResponse
-import app.aaps.pump.omnipod.dash.driver.pod.state.OmnipodDashPodStateManager
+import app.aaps.pump.omnipod.common.bledriver.comm.OmnipodBleManager
+import app.aaps.pump.omnipod.common.bledriver.event.PodEvent
+import app.aaps.pump.omnipod.common.bledriver.pod.command.DeactivateCommand
+import app.aaps.pump.omnipod.common.bledriver.pod.command.GetStatusCommand
+import app.aaps.pump.omnipod.common.bledriver.pod.command.GetVersionCommand
+import app.aaps.pump.omnipod.common.bledriver.pod.command.GetVersionCommand.Companion.DEFAULT_UNIQUE_ID
+import app.aaps.pump.omnipod.common.bledriver.pod.command.ProgramAlertsCommand
+import app.aaps.pump.omnipod.common.bledriver.pod.command.ProgramBasalCommand
+import app.aaps.pump.omnipod.common.bledriver.pod.command.ProgramBeepsCommand
+import app.aaps.pump.omnipod.common.bledriver.pod.command.ProgramBolusCommand
+import app.aaps.pump.omnipod.common.bledriver.pod.command.ProgramTempBasalCommand
+import app.aaps.pump.omnipod.common.bledriver.pod.command.SetUniqueIdCommand
+import app.aaps.pump.omnipod.common.bledriver.pod.command.SilenceAlertsCommand
+import app.aaps.pump.omnipod.common.bledriver.pod.command.StopDeliveryCommand
+import app.aaps.pump.omnipod.common.bledriver.pod.command.SuspendDeliveryCommand
+import app.aaps.pump.omnipod.common.bledriver.pod.definition.ActivationProgress
+import app.aaps.pump.omnipod.common.bledriver.pod.definition.AlertConfiguration
+import app.aaps.pump.omnipod.common.bledriver.pod.definition.AlertTrigger
+import app.aaps.pump.omnipod.common.bledriver.pod.definition.AlertType
+import app.aaps.pump.omnipod.common.bledriver.pod.definition.BasalProgram
+import app.aaps.pump.omnipod.common.bledriver.pod.definition.BeepRepetitionType
+import app.aaps.pump.omnipod.common.bledriver.pod.definition.BeepType
+import app.aaps.pump.omnipod.common.bledriver.pod.definition.PodConstants.Companion.MAX_POD_LIFETIME
+import app.aaps.pump.omnipod.common.bledriver.pod.definition.PodConstants.Companion.POD_EXPIRATION_ALERT_HOURS_REMAINING_DEFAULT
+import app.aaps.pump.omnipod.common.bledriver.pod.definition.PodConstants.Companion.POD_EXPIRATION_IMMINENT_ALERT_HOURS_REMAINING
+import app.aaps.pump.omnipod.common.bledriver.pod.definition.PodConstants.Companion.POD_PULSE_BOLUS_UNITS
+import app.aaps.pump.omnipod.common.bledriver.pod.definition.PodStatus
+import app.aaps.pump.omnipod.common.bledriver.pod.definition.ProgramReminder
+import app.aaps.pump.omnipod.common.bledriver.pod.response.AlarmStatusResponse
+import app.aaps.pump.omnipod.common.bledriver.pod.response.DefaultStatusResponse
+import app.aaps.pump.omnipod.common.bledriver.pod.response.Response
+import app.aaps.pump.omnipod.common.bledriver.pod.response.ResponseType
+import app.aaps.pump.omnipod.common.bledriver.pod.response.SetUniqueIdResponse
+import app.aaps.pump.omnipod.common.bledriver.pod.response.VersionResponse
+import app.aaps.pump.omnipod.common.bledriver.pod.state.OmnipodDashPodStateManager
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.ContributesBinding
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.SingleIn
+import dev.zacsweers.metro.binding
 import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.functions.Action
 import io.reactivex.rxjava3.functions.Consumer
@@ -49,14 +54,16 @@ import java.util.Date
 import java.util.EnumSet
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
-import javax.inject.Inject
-import javax.inject.Singleton
+import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.time.Duration.Companion.hours
 
-@Singleton
-class OmnipodDashManagerImpl @Inject constructor(
+@ContributesBinding(AppScope::class, binding = binding<OmnipodDashManager>())
+@SingleIn(AppScope::class)
+@Inject
+class OmnipodDashManagerImpl(
     private val logger: AAPSLogger,
     private val podStateManager: OmnipodDashPodStateManager,
-    private val bleManager: OmnipodDashBleManager,
+    private val bleManager: OmnipodBleManager,
     private val aapsSchedulers: AapsSchedulers
 ) : OmnipodDashManager {
 
@@ -64,6 +71,11 @@ class OmnipodDashManagerImpl @Inject constructor(
 
         const val NONCE = 1229869870 // The Omnipod Dash seems to use a fixed nonce
     }
+
+    private val activationRunning = AtomicBoolean(false)
+
+    override val isActivationRunning: Boolean
+        get() = activationRunning.get()
 
     private val observePodReadyForActivationPart1: Observable<PodEvent>
         get() = Observable.defer {
@@ -271,6 +283,7 @@ class OmnipodDashManagerImpl @Inject constructor(
             observeActivationPart1Commands(lowReservoirAlertTrigger)
         ).doOnComplete(ActivationProgressUpdater(ActivationProgress.PHASE_1_COMPLETED))
             .interceptPodEvents()
+            .markActivationRunning()
     }
 
     private fun observeActivationPart1Commands(lowReservoirAlertTrigger: AlertTrigger.ReservoirVolumeTrigger?): Observable<PodEvent> {
@@ -374,6 +387,7 @@ class OmnipodDashManagerImpl @Inject constructor(
             observeActivationPart2Commands(basalProgram, userConfiguredExpirationReminderHours, userConfiguredExpirationAlarmHours)
         ).doOnComplete(ActivationProgressUpdater(ActivationProgress.COMPLETED))
             .interceptPodEvents()
+            .markActivationRunning()
     }
 
     private fun observeActivationPart2Commands(basalProgram: BasalProgram, userConfiguredExpirationReminderHours: Long?, userConfiguredExpirationAlarmHours: Long?):
@@ -434,9 +448,9 @@ class OmnipodDashManagerImpl @Inject constructor(
                 AlertConfiguration(
                     AlertType.EXPIRATION,
                     enabled = expirationAlarmEnabled,
-                    durationInMinutes = (TimeUnit.HOURS.toMinutes(
+                    durationInMinutes = ((
                         userConfiguredExpirationAlarmHours ?: POD_EXPIRATION_ALERT_HOURS_REMAINING_DEFAULT
-                    ) - 60).toShort(),
+                        ).hours.inWholeMinutes - 60).toShort(),
                     autoOff = false,
                     AlertTrigger.TimerTrigger(
                         expirationAlarmDelay.toMinutes().toShort()
@@ -772,6 +786,12 @@ class OmnipodDashManagerImpl @Inject constructor(
         return this.doOnNext(PodEventInterceptor())
             .doOnError(ErrorInterceptor())
             .subscribeOn(aapsSchedulers.io)
+    }
+
+    // Placed after subscribeOn, so the flag is set on the subscribing thread before any BLE work starts.
+    private fun Observable<PodEvent>.markActivationRunning(): Observable<PodEvent> {
+        return this.doOnSubscribe { activationRunning.set(true) }
+            .doFinally { activationRunning.set(false) }
     }
 
     inner class ErrorInterceptor : Consumer<Throwable> {

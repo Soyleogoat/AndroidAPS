@@ -15,27 +15,29 @@ import app.aaps.pump.medtronic.defs.BatteryType
 import app.aaps.pump.medtronic.defs.MedtronicDeviceType
 import app.aaps.pump.medtronic.keys.MedtronicLongNonKey
 import app.aaps.pump.medtronic.keys.MedtronicStringPreferenceKey
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.SingleIn
 import java.util.Calendar
 import java.util.GregorianCalendar
-import javax.inject.Inject
-import javax.inject.Singleton
 
 /**
  * Created by andy on 4/28/18.
  */
-@Singleton
-class MedtronicPumpStatus @Inject constructor(
-    preferences: Preferences,
+@SingleIn(AppScope::class)
+@Inject
+class MedtronicPumpStatus(
+    private val preferences: Preferences,
     private val rxBus: RxBus,
     private val rileyLinkUtil: RileyLinkUtil
 ) : PumpStatus(PumpType.MEDTRONIC_522_722) {
 
     var errorDescription: String? = null
-    var serialNumber: String = preferences.get(MedtronicStringPreferenceKey.Serial)
+    var serialNumber: String = preferences.getIfExists(MedtronicStringPreferenceKey.Serial) ?: ""
+    var pumpFrequency: String? = null
     var maxBolus: Double? = null
     var maxBasal: Double? = null
     var runningTBR: PumpDbEntryTBR? = null
-    var runningTBRWithTemp: PumpDbEntryTBR? = null
 
     // statuses
     var pumpDeviceState = PumpDeviceState.NeverContacted
@@ -51,7 +53,7 @@ class MedtronicPumpStatus @Inject constructor(
     var basalProfileStatus = BasalProfileStatus.NotInitialized
     var batteryType = BatteryType.None
 
-    init {
+    fun initSettings() {
         activeProfileName = "STD"
         reservoirRemainingUnits = 75.0
         batteryRemaining = 75
@@ -59,6 +61,7 @@ class MedtronicPumpStatus @Inject constructor(
         if (medtronicDeviceTypeMap.isEmpty()) createMedtronicDeviceTypeMap()
         lastConnection = preferences.get(MedtronicLongNonKey.LastGoodPumpCommunicationTime)
         lastDataTime = lastConnection
+        this.tempBasalLegacyMode = true
     }
 
     private fun createMedtronicDeviceTypeMap() {
@@ -98,6 +101,18 @@ class MedtronicPumpStatus @Inject constructor(
             return 0.0
         }
 
+    // Battery type
+    //private var batteryTypeByDescMap: MutableMap<String, BatteryType?> = HashMap()
+
+    // fun getBatteryTypeByDescription(batteryTypeStr: String?): BatteryType {
+    //     if (batteryTypeByDescMap.isEmpty()) {
+    //         for (value in BatteryType.entries) {
+    //             batteryTypeByDescMap[rh.gs(value.description)] = value
+    //         }
+    //     }
+    //     return batteryTypeByDescMap[batteryTypeStr] ?: BatteryType.None
+    // }
+
     override val errorInfo: String get() = errorDescription ?: "-"
 
     val tbrRemainingTime: Int?
@@ -105,16 +120,20 @@ class MedtronicPumpStatus @Inject constructor(
             if (tempBasalStart == null) return null
             if (tempBasalEnd == null) {
                 val startTime = tempBasalStart!!
-                tempBasalEnd = startTime + tempBasalLength!! * 60 * 1000
+                tempBasalEnd = startTime + tempBasalDuration!! * 60 * 1000
             }
             if (System.currentTimeMillis() > tempBasalEnd!!) {
                 tempBasalStart = null
                 tempBasalEnd = null
-                tempBasalLength = null
+                tempBasalDuration = null
                 tempBasalAmount = null
                 return null
             }
             val timeMinutes = (tempBasalEnd!! - System.currentTimeMillis()) / (1000 * 60)
             return timeMinutes.toInt()
         }
+
+    init {
+        initSettings()
+    }
 }

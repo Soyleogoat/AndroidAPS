@@ -1,17 +1,24 @@
 package app.aaps.pump.omnipod.dash.driver
 
-import app.aaps.pump.omnipod.dash.driver.event.PodEvent
-import app.aaps.pump.omnipod.dash.driver.pod.definition.AlertConfiguration
-import app.aaps.pump.omnipod.dash.driver.pod.definition.AlertTrigger
-import app.aaps.pump.omnipod.dash.driver.pod.definition.AlertType
-import app.aaps.pump.omnipod.dash.driver.pod.definition.BasalProgram
-import app.aaps.pump.omnipod.dash.driver.pod.definition.BeepType
-import app.aaps.pump.omnipod.dash.driver.pod.response.ResponseType
+import app.aaps.pump.omnipod.common.bledriver.event.PodEvent
+import app.aaps.pump.omnipod.common.bledriver.pod.definition.AlertConfiguration
+import app.aaps.pump.omnipod.common.bledriver.pod.definition.AlertTrigger
+import app.aaps.pump.omnipod.common.bledriver.pod.definition.AlertType
+import app.aaps.pump.omnipod.common.bledriver.pod.definition.BasalProgram
+import app.aaps.pump.omnipod.common.bledriver.pod.definition.BeepType
+import app.aaps.pump.omnipod.common.bledriver.pod.response.ResponseType
 import io.reactivex.rxjava3.core.Observable
-import java.util.*
+import java.util.EnumSet
 import java.util.concurrent.CountDownLatch
 
 interface OmnipodDashManager {
+
+    /**
+     * True from the moment [activatePodPart1] or [activatePodPart2] is subscribed until it completes,
+     * fails or is disposed. The activation talks to the pod outside the command queue, so the queue
+     * must not use or close the BLE link during this time.
+     */
+    val isActivationRunning: Boolean
 
     fun activatePodPart1(lowReservoirAlertTrigger: AlertTrigger.ReservoirVolumeTrigger?): Observable<PodEvent>
 
